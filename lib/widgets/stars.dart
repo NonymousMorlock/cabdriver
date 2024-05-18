@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 class StarsWidget extends StatelessWidget {
-  const StarsWidget({Key key, this.numberOfStars}) : super(key: key);
+  const StarsWidget({super.key, required this.numberOfStars});
+
   final int numberOfStars;
+
   @override
   Widget build(BuildContext context) {
     if (numberOfStars == 0) {

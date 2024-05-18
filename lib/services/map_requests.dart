@@ -7,9 +7,10 @@ import 'package:http/http.dart' as http;
 
 class GoogleMapsServices {
   Future<RouteModel> getRouteByCoordinates(LatLng l1, LatLng l2) async {
-    final url =
-        'https://maps.googleapis.com/maps/api/directions/json?origin=${l1.latitude},${l1.longitude}&destination=${l2.latitude},${l2.longitude}&key=$GOOGLE_MAPS_API_KEY';
-    final response = await http.get(url);
+    final url = 'https://maps.googleapis.com/maps/api/directions/json?ori'
+        'gin=${l1.latitude},${l1.longitude}&destination=${l2.latitude}'
+        ',${l2.longitude}&key=$GOOGLE_MAPS_API_KEY';
+    final response = await http.get(Uri.parse(url));
     final Map values = jsonDecode(response.body);
     final Map routes = values['routes'][0];
     final Map legs = values['routes'][0]['legs'][0];

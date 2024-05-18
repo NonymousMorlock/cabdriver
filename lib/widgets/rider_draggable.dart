@@ -1,4 +1,5 @@
 import 'package:cabdriver/helpers/style.dart';
+import 'package:cabdriver/helpers/utils.dart';
 import 'package:cabdriver/locators/service_locator.dart';
 import 'package:cabdriver/providers/app_provider.dart';
 import 'package:cabdriver/services/call_sms.dart';
@@ -7,9 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class RiderWidget extends StatelessWidget {
-  const RiderWidget({super.key});
+  RiderWidget({super.key}) : _service = locator<CallsAndMessagesService>();
 
-  final CallsAndMessagesService _service = locator<CallsAndMessagesService>();
+  final CallsAndMessagesService _service;
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +20,7 @@ class RiderWidget extends StatelessWidget {
       initialChildSize: 0.1,
       minChildSize: 0.05,
       maxChildSize: 0.6,
-      builder: (BuildContext context, myscrollController) {
+      builder: (context, myScrollController) {
         return Container(
           decoration: BoxDecoration(
             color: white,
@@ -35,14 +36,14 @@ class RiderWidget extends StatelessWidget {
             ],
           ),
           child: ListView(
-            controller: myscrollController,
+            controller: myScrollController,
             children: [
               const SizedBox(
                 height: 12,
               ),
               ListTile(
                 leading: Container(
-                  child: appState.riderModel.phone == null
+                  child: appState.riderModel?.photo == null
                       ? const CircleAvatar(
                           radius: 30,
                           child: Icon(
@@ -53,7 +54,7 @@ class RiderWidget extends StatelessWidget {
                       : CircleAvatar(
                           radius: 30,
                           backgroundImage:
-                              NetworkImage(appState.riderModel.photo),
+                              NetworkImage(appState.riderModel!.photo),
                         ),
                 ),
                 title: Row(
@@ -63,19 +64,20 @@ class RiderWidget extends StatelessWidget {
                       text: TextSpan(
                         children: [
                           TextSpan(
-                            text: '${appState.riderModel.name}\n',
+                            text: '${appState.riderModel?.name}\n',
                             style: const TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          TextSpan(
-                            text: appState.rideRequestModel.destination,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w300,
+                          if (appState.rideRequestModel != null)
+                            TextSpan(
+                              text: appState.rideRequestModel!.destination,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w300,
+                              ),
                             ),
-                          ),
                         ],
                         style: const TextStyle(color: black),
                       ),
@@ -89,14 +91,20 @@ class RiderWidget extends StatelessWidget {
                   ),
                   child: IconButton(
                     onPressed: () {
-                      _service.call(appState.riderModel.phone);
+                      if (appState.riderModel?.phone == null) {
+                        Utils.showSnackBar(
+                          context,
+                          message: 'Phone number not available',
+                        );
+                      }
+                      _service.call(appState.riderModel!.phone!);
                     },
                     icon: const Icon(Icons.call),
                   ),
                 ),
               ),
               const Divider(),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.all(12),
                 child: CustomText(
                   text: 'Ride details',
@@ -157,13 +165,15 @@ class RiderWidget extends StatelessWidget {
                             fontSize: 16,
                           ),
                         ),
-                        TextSpan(
-                          text: '${appState.rideRequestModel.destination} \n',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w300,
-                            fontSize: 16,
+                        if (appState.rideRequestModel != null)
+                          TextSpan(
+                            text: '${appState.rideRequestModel!.destination} '
+                                '\n',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w300,
+                              fontSize: 16,
+                            ),
                           ),
-                        ),
                       ],
                       style: const TextStyle(color: black),
                     ),
@@ -176,7 +186,7 @@ class RiderWidget extends StatelessWidget {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: red),
                   onPressed: () {},
-                  child: const CustomText(
+                  child: CustomText(
                     text: 'Cancel Ride',
                     color: white,
                   ),

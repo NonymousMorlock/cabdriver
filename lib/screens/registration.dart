@@ -1,5 +1,6 @@
 import 'package:cabdriver/helpers/screen_navigation.dart';
 import 'package:cabdriver/helpers/style.dart';
+import 'package:cabdriver/helpers/utils.dart';
 import 'package:cabdriver/providers/app_provider.dart';
 import 'package:cabdriver/providers/user.dart';
 import 'package:cabdriver/screens/home.dart';
@@ -164,12 +165,18 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     padding: const EdgeInsets.all(10),
                     child: GestureDetector(
                       onTap: () async {
-                        if (!await authProvider.signUp(app.position)) {
-                          _key.currentState.showSnackBar(
-                            const SnackBar(
-                                content: Text('Registration failed!')),
+                        if (app.position == null ||
+                            !await authProvider.signUp(app.position!)) {
+                          Utils.showSnackBar(
+                            context,
+                            message: 'Registration failed!',
                           );
                           return;
+                        } else {
+                          Utils.showSnackBar(
+                            context,
+                            message: 'Registration successful!',
+                          );
                         }
                         authProvider.clearController();
                         changeScreenReplacement(context, const MyHomePage());

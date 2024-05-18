@@ -19,8 +19,10 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
   @override
   void initState() {
     super.initState();
-    final state = Provider.of<AppStateProvider>(context, listen: false);
-    state.listenToRequest(id: state.rideRequestModel.id, context: context);
+    final state = context.read<AppStateProvider>();
+    if (state.rideRequestModel != null) {
+      state.listenToRequest(id: state.rideRequestModel!.id, context: context);
+    }
   }
 
   @override
@@ -53,10 +55,14 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                       color: Colors.deepOrange,
                       borderRadius: BorderRadius.circular(40),
                     ),
-                    child: CircleAvatar(
-                      radius: 45,
-                      backgroundImage: NetworkImage(appState.riderModel.photo),
-                    ),
+                    child: appState.riderModel?.photo == null
+                        ? null
+                        : CircleAvatar(
+                            radius: 45,
+                            backgroundImage: NetworkImage(
+                              appState.riderModel!.photo,
+                            ),
+                          ),
                   ),
                 ],
               ),
@@ -64,16 +70,16 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CustomText(text: appState.riderModel.name ?? 'Nada'),
+                  CustomText(text: appState.riderModel?.name ?? 'Nada'),
                 ],
               ),
               const SizedBox(height: 10),
               stars(
-                rating: appState.riderModel.rating,
-                votes: appState.riderModel.votes,
+                rating: appState.riderModel?.rating ?? 0.0,
+                votes: appState.riderModel?.votes ?? 0,
               ),
               const Divider(),
-              const ListTile(
+              ListTile(
                 title: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -85,13 +91,14 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                 ),
                 subtitle: ElevatedButton.icon(
                   onPressed: () async {
-                    final destinationCoordiates = LatLng(
-                      appState.rideRequestModel.dLatitude,
-                      appState.rideRequestModel.dLongitude,
-                    );
+                    final dLatitude = appState.rideRequestModel?.dLatitude;
+                    final dLongitude = appState.rideRequestModel?.dLongitude;
+                    final destination = appState.rideRequestModel?.destination;
+                    if (dLatitude == null || dLongitude == null) return;
+                    final destinationCoordiates = LatLng(dLatitude, dLongitude);
                     appState.addLocationMarker(
                       destinationCoordiates,
-                      appState.rideRequestModel.destination ?? 'Nada',
+                      destination ?? 'Nada',
                       'Destination Location',
                     );
                     showModalBottomSheet(
@@ -119,7 +126,7 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                     Icons.location_on,
                   ),
                   label: CustomText(
-                    text: appState.rideRequestModel.destination ?? 'Nada',
+                    text: appState.rideRequestModel?.destination ?? 'Nada',
                     weight: FontWeight.bold,
                   ),
                 ),
@@ -133,13 +140,14 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                     icon: const Icon(Icons.flag),
                     label: const Text('User is near by'),
                   ),
-                  ElevatedButton.icon(
-                    onPressed: null,
-                    icon: const Icon(Icons.attach_money),
-                    label: Text(
-                      '${appState.rideRequestModel.distance.value / 500} ',
+                  if (appState.rideRequestModel != null)
+                    ElevatedButton.icon(
+                      onPressed: null,
+                      icon: const Icon(Icons.attach_money),
+                      label: Text(
+                        '${appState.rideRequestModel!.distance.value / 500} ',
+                      ),
                     ),
-                  ),
                 ],
               ),
               const Divider(),
@@ -149,7 +157,7 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                   CustomBtn(
                     text: 'Accept',
                     onTap: () async {
-                      if (appState.requestModelFirebase.status != 'pending') {
+                      if (appState.requestModelFirebase?.status != 'pending') {
                         showDialog(
                           context: context,
                           builder: (BuildContext context) {
@@ -180,16 +188,20 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                         );
                       } else {
                         appState.clearMarkers();
-
-                        appState.acceptRequest(
-                          requestId: appState.rideRequestModel.id,
-                          driverId: userProvider.userModel.id,
-                        );
-                        appState.changeWidgetShowed(showWidget: Show.RIDER);
-                        appState.sendRequest(
-                          coordinates:
-                              appState.requestModelFirebase.getCoordinates(),
-                        );
+                        if (userProvider.userModel != null &&
+                            appState.rideRequestModel != null) {
+                          appState.acceptRequest(
+                            requestId: appState.rideRequestModel!.id,
+                            driverId: userProvider.userModel!.id,
+                          );
+                          appState.changeWidgetShowed(showWidget: Show.RIDER);
+                          if (appState.requestModelFirebase != null) {
+                            appState.sendRequest(
+                              coordinates: appState.requestModelFirebase!
+                                  .getCoordinates(),
+                            );
+                          }
+                        }
 //                      showDialog(
 //                          context: context,
 //                          builder: (BuildContext context) {

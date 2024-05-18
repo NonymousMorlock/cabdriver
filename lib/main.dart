@@ -8,9 +8,9 @@ import 'package:cabdriver/screens/splash.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  setupLocator();
+  await setupLocator();
 
   return runApp(
     MultiProvider(
@@ -60,7 +60,7 @@ class MyApp extends StatelessWidget {
             case Status.Authenticating:
               return const LoginScreen();
             case Status.Authenticated:
-              return const MyHomePage();
+              return MyHomePage();
             default:
               return const LoginScreen();
           }

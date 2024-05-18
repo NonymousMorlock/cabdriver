@@ -9,7 +9,7 @@ class RideRequestServices {
     firebaseFiretore.collection(collection).doc(values['id']).update(values);
   }
 
-  Stream<QuerySnapshot> requestStream({String id}) {
+  Stream<QuerySnapshot> requestStream() {
     final reference = firebaseFiretore.collection(collection);
     return reference.snapshots();
   }

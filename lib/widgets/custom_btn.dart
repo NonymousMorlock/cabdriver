@@ -5,18 +5,18 @@ import 'package:cabdriver/widgets/custom_text.dart';
 
 class CustomBtn extends StatelessWidget {
   const CustomBtn({
-    Key key,
-    @required this.text,
+    super.key,
+    required this.text,
     this.txtColor,
     this.bgColor,
     this.shadowColor,
-    @required this.onTap,
-  }) : super(key: key);
+    required this.onTap,
+  });
   final String text;
-  final Color txtColor;
-  final Color bgColor;
-  final Color shadowColor;
-  final Function onTap;
+  final Color? txtColor;
+  final Color? bgColor;
+  final Color? shadowColor;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +30,7 @@ class CustomBtn extends StatelessWidget {
             BoxShadow(
               color: shadowColor == null
                   ? Colors.grey.withOpacity(0.5)
-                  : shadowColor.withOpacity(0.5),
+                  : shadowColor!.withOpacity(0.5),
               offset: const Offset(2, 3),
               blurRadius: 4,
             ),

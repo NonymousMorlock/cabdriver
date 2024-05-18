@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:cabdriver/helpers/constants.dart';
+import 'package:cabdriver/locators/service_locator.dart';
 import 'package:cabdriver/models/ride_Request.dart';
 import 'package:cabdriver/models/rider.dart';
 import 'package:cabdriver/models/route.dart';
@@ -49,19 +50,28 @@ class AppStateProvider with ChangeNotifier {
   static const EXPIRED = 'expired';
 
   // ANCHOR: VARIABLES DEFINITION
+
+  GoogleMapController? _mapController;
+  Position? position;
+  RouteModel? routeModel;
+  RideRequestModel? rideRequestModel;
+  RequestModelFirebase? requestModelFirebase;
+  SharedPreferences prefs = locator<SharedPreferences>();
+  Timer? periodicTimer;
+  Show show = Show.RIDER;
+  RiderModel? riderModel;
+  StreamSubscription<QuerySnapshot>? requestStream;
+  static LatLng? _center;
+  LatLng? _lastPosition = _center;
   Set<Marker> _markers = {};
   Set<Polyline> _poly = {};
-  final GoogleMapsServices _googleMapsServices = GoogleMapsServices();
-  GoogleMapController _mapController;
-  Position position;
-  static LatLng _center;
-  LatLng _lastPosition = _center;
   final TextEditingController _locationController = TextEditingController();
   TextEditingController destinationController = TextEditingController();
+  final GoogleMapsServices _googleMapsServices = GoogleMapsServices();
 
-  LatLng get center => _center;
+  LatLng? get center => _center;
 
-  LatLng get lastPosition => _lastPosition;
+  LatLng? get lastPosition => _lastPosition;
 
   TextEditingController get locationController => _locationController;
 
@@ -69,32 +79,28 @@ class AppStateProvider with ChangeNotifier {
 
   Set<Polyline> get poly => _poly;
 
-  GoogleMapController get mapController => _mapController;
-  RouteModel routeModel;
-  SharedPreferences prefs;
+  GoogleMapController? get mapController => _mapController;
 
   Location location = Location();
   bool hasNewRideRequest = false;
   final UserServices _userServices = UserServices();
-  RideRequestModel rideRequestModel;
-  RequestModelFirebase requestModelFirebase;
 
-  RiderModel riderModel;
   final RiderServices _riderServices = RiderServices();
   double distanceFromRider = 0;
   double totalRideDistance = 0;
-  StreamSubscription<QuerySnapshot> requestStream;
   int timeCounter = 0;
   double percentage = 0;
-  Timer periodicTimer;
+
   final RideRequestServices _requestServices = RideRequestServices();
-  Show show;
 
   // ANCHOR LOCATION METHODS
   _userCurrentLocationUpdate(Position updatedPosition) async {
+    final lat = prefs.getDouble('lat');
+    final lng = prefs.getDouble('lng');
+    if (lat == null || lng == null) return;
     final distance = Geolocator.distanceBetween(
-      prefs.getDouble('lat'),
-      prefs.getDouble('lng'),
+      lat,
+      lng,
       updatedPosition.latitude,
       updatedPosition.longitude,
     );
@@ -103,8 +109,8 @@ class AppStateProvider with ChangeNotifier {
       'position': updatedPosition.toJson(),
     };
     if (distance >= 50) {
-      if (show == Show.RIDER) {
-        sendRequest(coordinates: requestModelFirebase.getCoordinates());
+      if (show == Show.RIDER && requestModelFirebase != null) {
+        sendRequest(coordinates: requestModelFirebase!.getCoordinates());
       }
       _userServices.updateUserData(values);
       await prefs.setDouble('lat', updatedPosition.latitude);
@@ -117,13 +123,15 @@ class AppStateProvider with ChangeNotifier {
     position = await Geolocator.getCurrentPosition();
     final List<GeoPlaceMark> placemark =
         await geocoding.placemarkFromCoordinates(
-      position.latitude,
-      position.longitude,
+      position!.latitude,
+      position!.longitude,
     );
-    _center = LatLng(position.latitude, position.longitude);
-    await prefs.setDouble('lat', position.latitude);
-    await prefs.setDouble('lng', position.longitude);
-    _locationController.text = placemark[0].name;
+    _center = LatLng(position!.latitude, position!.longitude);
+    await prefs.setDouble('lat', position!.latitude);
+    await prefs.setDouble('lng', position!.longitude);
+    if (placemark.first.name != null) {
+      _locationController.text = placemark.first.name!;
+    }
     notifyListeners();
   }
 
@@ -144,9 +152,12 @@ class AppStateProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> sendRequest(
-      {String intendedLocation, LatLng coordinates}) async {
-    final origin = LatLng(position.latitude, position.longitude);
+  Future<void> sendRequest({
+    String? intendedLocation,
+    required LatLng coordinates,
+  }) async {
+    if (position == null) return;
+    final origin = LatLng(position!.latitude, position!.longitude);
 
     final destination = coordinates;
     final route =
@@ -154,11 +165,11 @@ class AppStateProvider with ChangeNotifier {
     routeModel = route;
     addLocationMarker(
       destination,
-      routeModel.endAddress,
-      routeModel.distance.text,
+      routeModel!.endAddress,
+      routeModel!.distance.text,
     );
     _center = destination;
-    destinationController.text = routeModel.endAddress;
+    destinationController.text = routeModel!.endAddress;
 
     _createRoute(route.points);
     notifyListeners();
@@ -191,7 +202,7 @@ class AppStateProvider with ChangeNotifier {
 
   List _decodePoly(String poly) {
     final list = poly.codeUnits;
-    final lList = List();
+    final lList = [];
     var index = 0;
     var len = poly.length;
     var c = 0;
@@ -254,8 +265,8 @@ class AppStateProvider with ChangeNotifier {
   _saveDeviceToken() async {
     prefs = await SharedPreferences.getInstance();
     if (prefs.getString('token') == null) {
-      final String deviceToken = await fcm.getToken();
-      await prefs.setString('token', deviceToken);
+      final deviceToken = await fcm.getToken();
+      if (deviceToken != null) await prefs.setString('token', deviceToken);
     }
   }
 
@@ -275,7 +286,7 @@ class AppStateProvider with ChangeNotifier {
   _handleNotificationData(Map<String, dynamic> data) async {
     hasNewRideRequest = true;
     rideRequestModel = RideRequestModel.fromMap(data['data']);
-    riderModel = await _riderServices.getRiderById(rideRequestModel.userId);
+    riderModel = await _riderServices.getRiderById(rideRequestModel!.userId);
     notifyListeners();
   }
 
@@ -285,15 +296,15 @@ class AppStateProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  listenToRequest({String id, BuildContext context}) async {
+  listenToRequest({required String id, required BuildContext context}) async {
 //    requestModelFirebase = await _requestServices.getRequestById(id);
     print('======= LISTENING =======');
     requestStream = _requestServices.requestStream().listen((querySnapshot) {
       for (final doc in querySnapshot.docChanges) {
-        if (doc.doc.data()['id'] == id) {
+        if (doc.doc.data()?['id'] == id) {
           requestModelFirebase = RequestModelFirebase.fromSnapshot(doc.doc);
           notifyListeners();
-          switch (doc.doc.data()['status']) {
+          switch (doc.doc.data()?['status']) {
             case CANCELLED:
               print('====== CANCELELD');
             case ACCEPTED:
@@ -310,7 +321,8 @@ class AppStateProvider with ChangeNotifier {
   }
 
   //  Timer counter for driver request
-  percentageCounter({String requestId, BuildContext context}) {
+  percentageCounter(
+      {required String requestId, required BuildContext context}) {
     notifyListeners();
     periodicTimer = Timer.periodic(const Duration(seconds: 1), (time) {
       timeCounter = timeCounter + 1;
@@ -321,13 +333,13 @@ class AppStateProvider with ChangeNotifier {
         percentage = 0;
         time.cancel();
         hasNewRideRequest = false;
-        requestStream.cancel();
+        requestStream?.cancel();
       }
       notifyListeners();
     });
   }
 
-  acceptRequest({String requestId, String driverId}) {
+  acceptRequest({required String requestId, required String driverId}) {
     hasNewRideRequest = false;
     _requestServices.updateRequest(
       {'id': requestId, 'status': 'accepted', 'driverId': driverId},
@@ -335,14 +347,14 @@ class AppStateProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  cancelRequest({String requestId}) {
+  cancelRequest({required String requestId}) {
     hasNewRideRequest = false;
     _requestServices.updateRequest({'id': requestId, 'status': 'cancelled'});
     notifyListeners();
   }
 
   //  ANCHOR UI METHODS
-  changeWidgetShowed({Show showWidget}) {
+  changeWidgetShowed({required Show showWidget}) {
     show = showWidget;
     notifyListeners();
   }

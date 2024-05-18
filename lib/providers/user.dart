@@ -15,15 +15,18 @@ class UserProvider with ChangeNotifier {
   UserProvider.initialize() {
     _fireSetUp();
   }
-  User _user;
+
+  User? _user;
   Status _status = Status.Uninitialized;
   final UserServices _userServices = UserServices();
-  UserModel _userModel;
+  UserModel? _userModel;
 
 //  getter
-  UserModel get userModel => _userModel;
+  UserModel? get userModel => _userModel;
+
   Status get status => _status;
-  User get user => _user;
+
+  User? get user => _user;
 
   // public variables
   final formkey = GlobalKey<FormState>();
@@ -41,6 +44,7 @@ class UserProvider with ChangeNotifier {
 
   Future<bool> signIn() async {
     final prefs = await SharedPreferences.getInstance();
+    bool result = false;
 
     try {
       _status = Status.Authenticating;
@@ -50,10 +54,17 @@ class UserProvider with ChangeNotifier {
         email: email.text.trim(),
         password: password.text.trim(),
       )
-          .then((value) async {
-        await prefs.setString('id', value.user.uid);
-      });
-      return true;
+          .then(
+        (value) async {
+          if (value.user == null) {
+            result = false;
+          } else {
+            result = true;
+            await prefs.setString('id', value.user!.uid);
+          }
+        },
+      );
+      return result;
     } catch (e) {
       _status = Status.Unauthenticated;
       notifyListeners();
@@ -63,6 +74,7 @@ class UserProvider with ChangeNotifier {
   }
 
   Future<bool> signUp(Position position) async {
+    bool finalResult = false;
     try {
       _status = Status.Authenticating;
       notifyListeners();
@@ -72,19 +84,25 @@ class UserProvider with ChangeNotifier {
         password: password.text.trim(),
       )
           .then((result) async {
-        final prefs = await SharedPreferences.getInstance();
-        final String deviceToken = await fcm.getToken();
-        await prefs.setString('id', result.user.uid);
-        _userServices.createUser(
-          id: result.user.uid,
-          name: name.text.trim(),
-          email: email.text.trim(),
-          phone: phone.text.trim(),
-          position: position.toJson(),
-          token: deviceToken,
-        );
+        if (result.user == null) {
+          finalResult = false;
+        } else {
+          final prefs = await SharedPreferences.getInstance();
+          final deviceToken = await fcm.getToken();
+          if (deviceToken == null) return;
+          await prefs.setString('id', result.user!.uid);
+          _userServices.createUser(
+            id: result.user!.uid,
+            name: name.text.trim(),
+            email: email.text.trim(),
+            phone: phone.text.trim(),
+            position: position.toJson(),
+            token: deviceToken,
+          );
+          finalResult = true;
+        }
       });
-      return true;
+      return finalResult;
     } catch (e) {
       _status = Status.Unauthenticated;
       notifyListeners();
@@ -108,7 +126,8 @@ class UserProvider with ChangeNotifier {
   }
 
   Future<void> reloadUserModel() async {
-    _userModel = await _userServices.getUserById(user.uid);
+    if (user == null) return;
+    _userModel = await _userServices.getUserById(user!.uid);
     notifyListeners();
   }
 
@@ -117,16 +136,18 @@ class UserProvider with ChangeNotifier {
   }
 
   saveDeviceToken() async {
-    final String deviceToken = await fcm.getToken();
-    _userServices.addDeviceToken(userId: user.uid, token: deviceToken);
+    final deviceToken = await fcm.getToken();
+    if (deviceToken == null || user == null) return;
+    _userServices.addDeviceToken(userId: user!.uid, token: deviceToken);
   }
 
-  _onStateChanged(User firebaseUser) async {
+  _onStateChanged(User? firebaseUser) async {
+    if (firebaseUser == null) return;
     final prefs = await SharedPreferences.getInstance();
     _user = firebaseUser;
     await prefs.setString('id', firebaseUser.uid);
 
-    _userModel = await _userServices.getUserById(user.uid).then((value) {
+    _userModel = await _userServices.getUserById(_user!.uid).then((value) {
       _status = Status.Authenticated;
       return value;
     });

@@ -1,5 +1,6 @@
 import 'package:cabdriver/helpers/screen_navigation.dart';
 import 'package:cabdriver/helpers/style.dart';
+import 'package:cabdriver/helpers/utils.dart';
 import 'package:cabdriver/providers/user.dart';
 import 'package:cabdriver/screens/home.dart';
 import 'package:cabdriver/screens/registration.dart';
@@ -107,9 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: GestureDetector(
                       onTap: () async {
                         if (!await authProvider.signIn()) {
-                          _key.currentState.showSnackBar(
-                            const SnackBar(content: Text('Login failed!')),
-                          );
+                          Utils.showSnackBar(context, message: 'Login failed!');
                           return;
                         }
                         authProvider.clearController();

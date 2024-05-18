@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class RideRequestModel {
-  RideRequestModel.fromMap(Map data) {
+  RideRequestModel.fromMap(Map data) : assert(data[DESTINATION] != null) {
     final String d = data[DESTINATION];
     _id = data[ID];
     _username = data[USERNAME];
@@ -17,6 +17,7 @@ class RideRequestModel {
       'value': int.parse(data[DISTANCE_VALUE]),
     });
   }
+
   static const ID = 'id';
   static const USERNAME = 'username';
   static const USER_ID = 'userId';
@@ -28,15 +29,15 @@ class RideRequestModel {
   static const DISTANCE_TEXT = 'distance_text';
   static const DISTANCE_VALUE = 'distance_value';
 
-  String _id;
-  String _username;
-  String _userId;
-  String _destination;
-  double _dLatitude;
-  double _dLongitude;
-  double _uLatitude;
-  double _uLongitude;
-  Distance _distance;
+  late String _id;
+  late String _username;
+  late String _userId;
+  late String? _destination;
+  late double _dLatitude;
+  late double _dLongitude;
+  late double _uLatitude;
+  late double _uLongitude;
+  late Distance _distance;
 
   String get id => _id;
 
@@ -44,7 +45,7 @@ class RideRequestModel {
 
   String get userId => _userId;
 
-  String get destination => _destination;
+  String? get destination => _destination;
 
   double get dLatitude => _dLatitude;
 
@@ -62,22 +63,26 @@ class Distance {
     text = data['text'];
     value = data['value'];
   }
-  String text;
-  int value;
+
+  late String text;
+  late int value;
 
   Map toJson() => {'text': text, 'value': value};
 }
 
 class RequestModelFirebase {
-  RequestModelFirebase.fromSnapshot(DocumentSnapshot snapshot) {
-    _id = snapshot.data()[ID];
-    _username = snapshot.data()[USERNAME];
-    _userId = snapshot.data()[USER_ID];
-    _driverId = snapshot.data()[DRIVER_ID];
-    _status = snapshot.data()[STATUS];
-    _position = snapshot.data()[POSITION];
-    _destination = snapshot.data()[DESTINATION];
+  RequestModelFirebase.fromSnapshot(DocumentSnapshot snapshot)
+      : assert(snapshot.data() != null) {
+    final data = snapshot.data()!;
+    _id = data[ID];
+    _username = data[USERNAME];
+    _userId = data[USER_ID];
+    _driverId = data[DRIVER_ID];
+    _status = data[STATUS];
+    _position = data[POSITION];
+    _destination = data[DESTINATION];
   }
+
   static const ID = 'id';
   static const USERNAME = 'username';
   static const USER_ID = 'userId';
@@ -86,20 +91,26 @@ class RequestModelFirebase {
   static const POSITION = 'position';
   static const DESTINATION = 'destination';
 
-  String _id;
-  String _username;
-  String _userId;
-  String _driverId;
-  String _status;
-  Map _position;
-  Map _destination;
+  late String _id;
+  late String _username;
+  late String _userId;
+  late String _driverId;
+  late String _status;
+  late Map _position;
+  late Map _destination;
 
   String get id => _id;
+
   String get username => _username;
+
   String get userId => _userId;
+
   String get driverId => _driverId;
+
   String get status => _status;
+
   Map get position => _position;
+
   Map get destination => _destination;
 
   LatLng getCoordinates() =>

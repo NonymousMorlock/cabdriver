@@ -18,8 +18,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: GOOGLE_MAPS_API_KEY);
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key key, this.title}) : super(key: key);
-  final String title;
+  const MyHomePage({super.key});
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -37,20 +36,20 @@ class _MyHomePageState extends State<MyHomePage> {
 
   _deviceToken() async {
     final preferences = await SharedPreferences.getInstance();
-    final user = Provider.of<UserProvider>(context, listen: false);
+    final user = context.read<UserProvider>();
 
-    if (user.userModel.token != preferences.getString('token')) {
-      Provider.of<UserProvider>(context, listen: false).saveDeviceToken();
+    if (user.userModel?.token != preferences.getString('token')) {
+      context.read<UserProvider>().saveDeviceToken();
     }
   }
 
   _updatePosition() async {
     //    this section down here will update the drivers current position on the DB when the app is opened
     final prefs = await SharedPreferences.getInstance();
-    final String id = prefs.getString('id');
+    final id = prefs.getString('id');
     final user = Provider.of<UserProvider>(context, listen: false);
     final app = Provider.of<AppStateProvider>(context, listen: false);
-    user.updateUserData({'id': id, 'position': app.position.toJson()});
+    user.updateUserData({'id': id, 'position': app.position?.toJson()});
   }
 
   @override
@@ -65,15 +64,15 @@ class _MyHomePageState extends State<MyHomePage> {
             children: [
               UserAccountsDrawerHeader(
                 accountName: CustomText(
-                  text: userProvider.userModel.name ?? '',
+                  text: userProvider.userModel?.name ?? '',
                   size: 18,
                   weight: FontWeight.bold,
                 ),
                 accountEmail: CustomText(
-                  text: userProvider.userModel.email ?? '',
+                  text: userProvider.userModel?.email ?? '',
                 ),
               ),
-              const ListTile(
+              ListTile(
                 leading: Icon(Icons.exit_to_app),
                 title: CustomText(text: 'Log out'),
                 onTap: () {
@@ -104,7 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
-                          child: userProvider.userModel.phone == null
+                          child: userProvider.userModel?.photo == null
                               ? const CircleAvatar(
                                   radius: 30,
                                   child: Icon(
@@ -115,7 +114,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               : CircleAvatar(
                                   radius: 30,
                                   backgroundImage: NetworkImage(
-                                    userProvider.userModel.photo,
+                                    userProvider.userModel!.photo,
                                   ),
                                 ),
                         ),
@@ -128,13 +127,13 @@ class _MyHomePageState extends State<MyHomePage> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               CustomText(
-                                text: userProvider.userModel.name,
+                                text: userProvider.userModel!.name,
                                 size: 18,
                                 weight: FontWeight.bold,
                               ),
                               stars(
-                                rating: userProvider.userModel.rating,
-                                votes: userProvider.userModel.votes,
+                                rating: userProvider.userModel?.rating ?? 0,
+                                votes: userProvider.userModel?.votes ?? 0,
                               ),
                             ],
                           ),
@@ -148,7 +147,7 @@ class _MyHomePageState extends State<MyHomePage> {
             //  ANCHOR Draggable DRIVER
             Visibility(
               visible: appState.show == Show.RIDER,
-              child: const RiderWidget(),
+              child: RiderWidget(),
             ),
           ],
         ),
@@ -168,6 +167,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
 class MapScreen extends StatefulWidget {
   const MapScreen(this.scaffoldState, {super.key});
+
   final GlobalKey<ScaffoldState> scaffoldState;
 
   @override
@@ -175,7 +175,6 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  GoogleMapsPlaces googlePlaces;
   TextEditingController destinationController = TextEditingController();
   Color darkBlue = Colors.black;
   Color grey = Colors.grey;
@@ -196,8 +195,10 @@ class _MapScreenState extends State<MapScreen> {
         : Stack(
             children: <Widget>[
               GoogleMap(
-                initialCameraPosition:
-                    CameraPosition(target: appState.center, zoom: 15),
+                initialCameraPosition: CameraPosition(
+                  target: appState.center!,
+                  zoom: 15,
+                ),
                 onMapCreated: appState.onCreate,
                 myLocationEnabled: true,
                 compassEnabled: false,
@@ -214,9 +215,7 @@ class _MapScreenState extends State<MapScreen> {
                     color: primary,
                     size: 30,
                   ),
-                  onPressed: () {
-                    scaffoldSate.currentState.openDrawer();
-                  },
+                  onPressed: scaffoldSate.currentState?.openDrawer,
                 ),
               ),
             ],

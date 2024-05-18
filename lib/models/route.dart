@@ -1,12 +1,10 @@
-import 'package:flutter/cupertino.dart';
-
 class RouteModel {
   RouteModel({
-    @required this.points,
-    @required this.distance,
-    @required this.timeNeeded,
-    @required this.startAddress,
-    @required this.endAddress,
+    required this.points,
+    required this.distance,
+    required this.timeNeeded,
+    required this.startAddress,
+    required this.endAddress,
   });
   final String points;
   final Distance distance;
@@ -20,8 +18,8 @@ class Distance {
     text = data['text'];
     value = data['value'];
   }
-  String text;
-  int value;
+  late String text;
+  late int value;
 }
 
 class TimeNeeded {
@@ -29,6 +27,6 @@ class TimeNeeded {
     text = data['text'];
     value = data['value'];
   }
-  String text;
-  int value;
+  late String text;
+  late int value;
 }
