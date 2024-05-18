@@ -1,0 +1,65 @@
+name: cabdriver
+description: A new Flutter application.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.7.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cloud_firestore: null
+  cupertino_icons: null
+  firebase_auth: ^0.18.1
+  firebase_core: ^0.5.0
+  firebase_messaging: ^5.0.2
+  flutter_google_places: null
+  flutter_rating_bar: ^3.0.1+1
+  flutter_spinkit: ^4.1.2+1
+  geocoder: null
+  geoflutterfire: ^2.2.1
+  geolocator: null
+  google_maps_flutter: null
+  google_maps_webservice: null
+  http: null
+  location: null
+  percent_indicator: ^2.1.7+2
+  provider: null
+  shared_preferences: ^0.5.12
+  uuid: null
+  url_launcher: ^5.0.3
+  get_it: ^1.0.3+2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - images/
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
