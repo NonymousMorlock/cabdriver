@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:cabdriver/helpers/constants.dart';
 import 'package:cabdriver/helpers/style.dart';
@@ -16,11 +17,24 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
-import 'dart:typed_data';
 
 enum Show { RIDER, TRIP }
 
 class AppStateProvider with ChangeNotifier {
+
+  AppStateProvider() {
+//    _subscribeUser();
+    _saveDeviceToken();
+    fcm.configure(
+//      this callback is used when the app runs on the foreground
+        onMessage: handleOnMessage,
+//        used when the app is closed completely and is launched using the notification
+        onLaunch: handleOnLaunch,
+//        when its on the background and opened using the notification drawer
+        onResume: handleOnResume,);
+    _getUserLocation();
+    Geolocator.getPositionStream().listen(_userCurrentLocationUpdate);
+  }
   static const ACCEPTED = 'accepted';
   static const CANCELLED = 'cancelled';
   static const PENDING = 'pending';
@@ -28,12 +42,12 @@ class AppStateProvider with ChangeNotifier {
   // ANCHOR: VARIABLES DEFINITION
   Set<Marker> _markers = {};
   Set<Polyline> _poly = {};
-  GoogleMapsServices _googleMapsServices = GoogleMapsServices();
+  final GoogleMapsServices _googleMapsServices = GoogleMapsServices();
   GoogleMapController _mapController;
   Position position;
   static LatLng _center;
   LatLng _lastPosition = _center;
-  TextEditingController _locationController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
   TextEditingController destinationController = TextEditingController();
 
   LatLng get center => _center;
@@ -45,50 +59,36 @@ class AppStateProvider with ChangeNotifier {
   RouteModel routeModel;
   SharedPreferences prefs;
 
-  Location location = new Location();
+  Location location = Location();
   bool hasNewRideRequest = false;
-  UserServices _userServices = UserServices();
+  final UserServices _userServices = UserServices();
   RideRequestModel rideRequestModel;
   RequestModelFirebase requestModelFirebase;
 
   RiderModel riderModel;
-  RiderServices _riderServices = RiderServices();
+  final RiderServices _riderServices = RiderServices();
   double distanceFromRider = 0;
   double totalRideDistance = 0;
   StreamSubscription<QuerySnapshot> requestStream;
   int timeCounter = 0;
   double percentage = 0;
   Timer periodicTimer;
-  RideRequestServices _requestServices = RideRequestServices();
+  final RideRequestServices _requestServices = RideRequestServices();
   Show show;
-
-  AppStateProvider() {
-//    _subscribeUser();
-    _saveDeviceToken();
-    fcm.configure(
-//      this callback is used when the app runs on the foreground
-        onMessage: handleOnMessage,
-//        used when the app is closed completely and is launched using the notification
-        onLaunch: handleOnLaunch,
-//        when its on the background and opened using the notification drawer
-        onResume: handleOnResume);
-    _getUserLocation();
-    Geolocator().getPositionStream().listen(_userCurrentLocationUpdate);
-  }
 
   // ANCHOR LOCATION METHODS
   _userCurrentLocationUpdate(Position updatedPosition) async {
-    double distance = await Geolocator().distanceBetween(
+    final distance = Geolocator.distanceBetween(
         prefs.getDouble('lat'),
         prefs.getDouble('lng'),
         updatedPosition.latitude,
-        updatedPosition.longitude);
-    Map<String, dynamic> values = {
-      "id": prefs.getString("id"),
-      "position": updatedPosition.toJson()
+        updatedPosition.longitude,);
+    var values = <String, dynamic>{
+      'id': prefs.getString('id'),
+      'position': updatedPosition.toJson(),
     };
     if (distance >= 50) {
-      if(show == Show.RIDER){
+      if (show == Show.RIDER) {
         sendRequest(coordinates: requestModelFirebase.getCoordinates());
       }
       _userServices.updateUserData(values);
@@ -99,8 +99,8 @@ class AppStateProvider with ChangeNotifier {
 
   _getUserLocation() async {
     prefs = await SharedPreferences.getInstance();
-    position = await Geolocator().getCurrentPosition();
-    List<Placemark> placemark = await Geolocator()
+    position = await Geolocator.getCurrentPosition();
+    final List<Placemark> placemark = await Geolocator()
         .placemarkFromCoordinates(position.latitude, position.longitude);
     _center = LatLng(position.latitude, position.longitude);
     await prefs.setDouble('lat', position.latitude);
@@ -126,15 +126,15 @@ class AppStateProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void sendRequest({String intendedLocation, LatLng coordinates}) async {
-    LatLng origin = LatLng(position.latitude, position.longitude);
+  Future<void> sendRequest({String intendedLocation, LatLng coordinates}) async {
+    final origin = LatLng(position.latitude, position.longitude);
 
-    LatLng destination = coordinates;
-    RouteModel route =
+    final destination = coordinates;
+    final route =
         await _googleMapsServices.getRouteByCoordinates(origin, destination);
     routeModel = route;
     addLocationMarker(
-        destination, routeModel.endAddress, routeModel.distance.text);
+        destination, routeModel.endAddress, routeModel.distance.text,);
     _center = destination;
     destinationController.text = routeModel.endAddress;
 
@@ -144,20 +144,19 @@ class AppStateProvider with ChangeNotifier {
 
   void _createRoute(String decodeRoute) {
     _poly = {};
-    var uuid = new Uuid();
-    String polyId = uuid.v1();
+    const uuid = Uuid();
+    final polyId = uuid.v1();
     poly.add(Polyline(
         polylineId: PolylineId(polyId),
         width: 8,
-        color: primary,
         onTap: () {},
-        points: _convertToLatLong(_decodePoly(decodeRoute))));
+        points: _convertToLatLong(_decodePoly(decodeRoute)),),);
     notifyListeners();
   }
 
   List<LatLng> _convertToLatLong(List points) {
-    List<LatLng> result = <LatLng>[];
-    for (int i = 0; i < points.length; i++) {
+    final result = <LatLng>[];
+    for (var i = 0; i < points.length; i++) {
       if (i % 2 != 0) {
         result.add(LatLng(points[i - 1], points[i]));
       }
@@ -166,15 +165,15 @@ class AppStateProvider with ChangeNotifier {
   }
 
   List _decodePoly(String poly) {
-    var list = poly.codeUnits;
-    var lList = new List();
-    int index = 0;
-    int len = poly.length;
-    int c = 0;
+    final list = poly.codeUnits;
+    final lList = List();
+    var index = 0;
+    var len = poly.length;
+    var c = 0;
 // repeating until all attributes are decoded
     do {
       var shift = 0;
-      int result = 0;
+      var result = 0;
 
       // for decoding value of one attribute
       do {
@@ -187,14 +186,16 @@ class AppStateProvider with ChangeNotifier {
       if (result & 1 == 1) {
         result = ~result;
       }
-      var result1 = (result >> 1) * 0.00001;
+      final result1 = (result >> 1) * 0.00001;
       lList.add(result1);
     } while (index < len);
 
 /*adding to previous value as done in encoding */
-    for (var i = 2; i < lList.length; i++) lList[i] += lList[i - 2];
+    for (var i = 2; i < lList.length; i++) {
+      lList[i] += lList[i - 2];
+    }
 
-    print(lList.toString());
+    print(lList);
 
     return lList;
   }
@@ -202,19 +203,18 @@ class AppStateProvider with ChangeNotifier {
   // ANCHOR MARKERS
   addLocationMarker(LatLng position, String destination, String distance) {
     _markers = {};
-    var uuid = new Uuid();
-    String markerId = uuid.v1();
+    const uuid = Uuid();
+    var markerId = uuid.v1();
     _markers.add(Marker(
         markerId: MarkerId(markerId),
         position: position,
-        infoWindow: InfoWindow(title: destination, snippet: distance),
-        icon: BitmapDescriptor.defaultMarker));
+        infoWindow: InfoWindow(title: destination, snippet: distance),),);
     notifyListeners();
   }
 
   Future<Uint8List> getMarker(BuildContext context) async {
-    ByteData byteData =
-        await DefaultAssetBundle.of(context).load("images/car.png");
+    final byteData =
+        await DefaultAssetBundle.of(context).load('images/car.png');
     return byteData.buffer.asUint8List();
   }
 
@@ -226,7 +226,7 @@ class AppStateProvider with ChangeNotifier {
   _saveDeviceToken() async {
     prefs = await SharedPreferences.getInstance();
     if (prefs.getString('token') == null) {
-      String deviceToken = await fcm.getToken();
+      final String deviceToken = await fcm.getToken();
       await prefs.setString('token', deviceToken);
     }
   }
@@ -259,38 +259,35 @@ class AppStateProvider with ChangeNotifier {
 
   listenToRequest({String id, BuildContext context}) async {
 //    requestModelFirebase = await _requestServices.getRequestById(id);
-    print("======= LISTENING =======");
+    print('======= LISTENING =======');
     requestStream = _requestServices.requestStream().listen((querySnapshot) {
-      querySnapshot.docChanges.forEach((doc) {
+      for (final doc in querySnapshot.docChanges) {
         if (doc.doc.data()['id'] == id) {
           requestModelFirebase = RequestModelFirebase.fromSnapshot(doc.doc);
           notifyListeners();
           switch (doc.doc.data()['status']) {
             case CANCELLED:
-              print("====== CANCELELD");
-              break;
+              print('====== CANCELELD');
             case ACCEPTED:
-              print("====== ACCEPTED");
-              break;
+              print('====== ACCEPTED');
             case EXPIRED:
-              print("====== EXPIRED");
-              break;
+              print('====== EXPIRED');
             default:
-              print("==== PEDING");
+              print('==== PEDING');
               break;
           }
         }
-      });
+      }
     });
   }
 
   //  Timer counter for driver request
   percentageCounter({String requestId, BuildContext context}) {
     notifyListeners();
-    periodicTimer = Timer.periodic(Duration(seconds: 1), (time) {
+    periodicTimer = Timer.periodic(const Duration(seconds: 1), (time) {
       timeCounter = timeCounter + 1;
       percentage = timeCounter / 100;
-      print("====== GOOOO $timeCounter");
+      print('====== GOOOO $timeCounter');
       if (timeCounter == 100) {
         timeCounter = 0;
         percentage = 0;
@@ -305,13 +302,13 @@ class AppStateProvider with ChangeNotifier {
   acceptRequest({String requestId, String driverId}) {
     hasNewRideRequest = false;
     _requestServices.updateRequest(
-        {"id": requestId, "status": "accepted", "driverId": driverId});
+        {'id': requestId, 'status': 'accepted', 'driverId': driverId},);
     notifyListeners();
   }
 
   cancelRequest({String requestId}) {
     hasNewRideRequest = false;
-    _requestServices.updateRequest({"id": requestId, "status": "cancelled"});
+    _requestServices.updateRequest({'id': requestId, 'status': 'cancelled'});
     notifyListeners();
   }
 

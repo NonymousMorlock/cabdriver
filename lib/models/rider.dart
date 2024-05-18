@@ -1,15 +1,26 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RiderModel {
-  static const ID = "id";
-  static const NAME = "name";
-  static const EMAIL = "email";
-  static const PHONE = "phone";
-  static const VOTES = "votes";
-  static const TRIPS = "trips";
-  static const RATING = "rating";
-  static const TOKEN = "token";
-  static const PHOTO = "photo";
+  RiderModel.fromSnapshot(DocumentSnapshot snapshot) {
+    _name = snapshot.data()[NAME];
+    _email = snapshot.data()[EMAIL];
+    _id = snapshot.data()[ID];
+    _phone = snapshot.data()[PHONE];
+    _token = snapshot.data()[TOKEN];
+    _votes = snapshot.data()[VOTES];
+    _trips = snapshot.data()[TRIPS];
+    _rating = snapshot.data()[RATING];
+    _photo = snapshot.data()[PHOTO];
+  }
+  static const ID = 'id';
+  static const NAME = 'name';
+  static const EMAIL = 'email';
+  static const PHONE = 'phone';
+  static const VOTES = 'votes';
+  static const TRIPS = 'trips';
+  static const RATING = 'rating';
+  static const TOKEN = 'token';
+  static const PHOTO = 'photo';
 
   String _id;
   String _name;
@@ -32,16 +43,4 @@ class RiderModel {
   double get rating => _rating;
   String get token => _token;
   String get photo => _photo;
-
-  RiderModel.fromSnapshot(DocumentSnapshot snapshot) {
-    _name = snapshot.data()[NAME];
-    _email = snapshot.data()[EMAIL];
-    _id = snapshot.data()[ID];
-    _phone = snapshot.data()[PHONE];
-    _token = snapshot.data()[TOKEN];
-    _votes = snapshot.data()[VOTES];
-    _trips = snapshot.data()[TRIPS];
-    _rating = snapshot.data()[RATING];
-    _photo = snapshot.data()[PHOTO];
-  }
 }

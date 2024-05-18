@@ -2,8 +2,9 @@ import 'package:cabdriver/helpers/style.dart';
 import 'package:cabdriver/widgets/loading.dart';
 import 'package:flutter/material.dart';
 
-
 class Splash extends StatefulWidget {
+  const Splash({super.key});
+
   @override
   _SplashState createState() => _SplashState();
 }
@@ -13,13 +14,13 @@ class _SplashState extends State<Splash> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: white,
-      body:Column(
+      body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Image.asset("images/lg.png"),
-          Loading(),
+          Image.asset('images/lg.png'),
+          const Loading(),
         ],
-      )
+      ),
     );
   }
 }

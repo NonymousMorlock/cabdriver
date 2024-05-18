@@ -2,16 +2,31 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class RideRequestModel {
-  static const ID = "id";
-  static const USERNAME = "username";
-  static const USER_ID = "userId";
-  static const DESTINATION = "destination";
-  static const DESTINATION_LAT = "destination_latitude";
-  static const DESTINATION_LNG = "destination_longitude";
-  static const USER_LAT = "user_latitude";
-  static const USER_LNG = "user_longitude";
-  static const DISTANCE_TEXT = "distance_text";
-  static const DISTANCE_VALUE = "distance_value";
+  RideRequestModel.fromMap(Map data) {
+    final String d = data[DESTINATION];
+    _id = data[ID];
+    _username = data[USERNAME];
+    _userId = data[USER_ID];
+    _destination = d.substring(0, d.indexOf(','));
+    _dLatitude = double.parse(data[DESTINATION_LAT]);
+    _dLongitude = double.parse(data[DESTINATION_LNG]);
+    _uLatitude = double.parse(data[USER_LAT]);
+    _uLongitude = double.parse(data[USER_LAT]);
+    _distance = Distance.fromMap({
+      'text': data[DISTANCE_TEXT],
+      'value': int.parse(data[DISTANCE_VALUE]),
+    });
+  }
+  static const ID = 'id';
+  static const USERNAME = 'username';
+  static const USER_ID = 'userId';
+  static const DESTINATION = 'destination';
+  static const DESTINATION_LAT = 'destination_latitude';
+  static const DESTINATION_LNG = 'destination_longitude';
+  static const USER_LAT = 'user_latitude';
+  static const USER_LNG = 'user_longitude';
+  static const DISTANCE_TEXT = 'distance_text';
+  static const DISTANCE_VALUE = 'distance_value';
 
   String _id;
   String _username;
@@ -40,44 +55,36 @@ class RideRequestModel {
   double get uLongitude => _uLongitude;
 
   Distance get distance => _distance;
-
-  RideRequestModel.fromMap(Map data) {
-    String _d = data[DESTINATION];
-    _id = data[ID];
-    _username = data[USERNAME];
-    _userId = data[USER_ID];
-    _destination = _d.substring(0, _d.indexOf(','));
-    _dLatitude = double.parse(data[DESTINATION_LAT]);
-    _dLongitude = double.parse(data[DESTINATION_LNG]);
-    _uLatitude = double.parse(data[USER_LAT]);
-    _uLongitude = double.parse(data[USER_LAT]);
-    _distance = Distance.fromMap({
-      "text": data[DISTANCE_TEXT],
-      "value": int.parse(data[DISTANCE_VALUE])
-    });
-  }
 }
 
 class Distance {
+  Distance.fromMap(Map data) {
+    text = data['text'];
+    value = data['value'];
+  }
   String text;
   int value;
 
-  Distance.fromMap(Map data) {
-    text = data["text"];
-    value = data["value"];
-  }
-
-  Map toJson() => {"text": text, "value": value};
+  Map toJson() => {'text': text, 'value': value};
 }
 
 class RequestModelFirebase {
-  static const ID = "id";
-  static const USERNAME = "username";
-  static const USER_ID = "userId";
-  static const DRIVER_ID = "driverId";
-  static const STATUS = "status";
-  static const POSITION = "position";
-  static const DESTINATION = "destination";
+  RequestModelFirebase.fromSnapshot(DocumentSnapshot snapshot) {
+    _id = snapshot.data()[ID];
+    _username = snapshot.data()[USERNAME];
+    _userId = snapshot.data()[USER_ID];
+    _driverId = snapshot.data()[DRIVER_ID];
+    _status = snapshot.data()[STATUS];
+    _position = snapshot.data()[POSITION];
+    _destination = snapshot.data()[DESTINATION];
+  }
+  static const ID = 'id';
+  static const USERNAME = 'username';
+  static const USER_ID = 'userId';
+  static const DRIVER_ID = 'driverId';
+  static const STATUS = 'status';
+  static const POSITION = 'position';
+  static const DESTINATION = 'destination';
 
   String _id;
   String _username;
@@ -95,15 +102,6 @@ class RequestModelFirebase {
   Map get position => _position;
   Map get destination => _destination;
 
-  RequestModelFirebase.fromSnapshot(DocumentSnapshot snapshot) {
-    _id = snapshot.data()[ID];
-    _username = snapshot.data()[USERNAME];
-    _userId = snapshot.data()[USER_ID];
-    _driverId = snapshot.data()[DRIVER_ID];
-    _status = snapshot.data()[STATUS];
-    _position = snapshot.data()[POSITION];
-    _destination = snapshot.data()[DESTINATION];
-  }
-
-  LatLng getCoordinates() => LatLng(_position['latitude'], _position['longitude']);
+  LatLng getCoordinates() =>
+      LatLng(_position['latitude'], _position['longitude']);
 }
