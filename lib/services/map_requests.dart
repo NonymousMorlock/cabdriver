@@ -14,11 +14,12 @@ class GoogleMapsServices {
     final Map routes = values['routes'][0];
     final Map legs = values['routes'][0]['legs'][0];
     var route = RouteModel(
-        points: routes['overview_polyline']['points'],
-        distance: Distance.fromMap(legs['distance']),
-        timeNeeded: TimeNeeded.fromMap(legs['duration']),
-        endAddress: legs['end_address'],
-        startAddress: legs['end_address'],);
+      points: routes['overview_polyline']['points'],
+      distance: Distance.fromMap(legs['distance']),
+      timeNeeded: TimeNeeded.fromMap(legs['duration']),
+      endAddress: legs['end_address'],
+      startAddress: legs['end_address'],
+    );
     return route;
   }
 }

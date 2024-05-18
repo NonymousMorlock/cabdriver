@@ -49,8 +49,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final prefs = await SharedPreferences.getInstance();
     final String id = prefs.getString('id');
     final user = Provider.of<UserProvider>(context, listen: false);
-    final app =
-        Provider.of<AppStateProvider>(context, listen: false);
+    final app = Provider.of<AppStateProvider>(context, listen: false);
     user.updateUserData({'id': id, 'position': app.position.toJson()});
   }
 
@@ -60,19 +59,20 @@ class _MyHomePageState extends State<MyHomePage> {
     var userProvider = Provider.of<UserProvider>(context);
     final Widget home = SafeArea(
       child: Scaffold(
-          key: scaffoldState,
-          drawer: Drawer(
-              child: ListView(
+        key: scaffoldState,
+        drawer: Drawer(
+          child: ListView(
             children: [
               UserAccountsDrawerHeader(
-                  accountName: CustomText(
-                    text: userProvider.userModel.name ?? '',
-                    size: 18,
-                    weight: FontWeight.bold,
-                  ),
-                  accountEmail: CustomText(
-                    text: userProvider.userModel.email ?? '',
-                  ),),
+                accountName: CustomText(
+                  text: userProvider.userModel.name ?? '',
+                  size: 18,
+                  weight: FontWeight.bold,
+                ),
+                accountEmail: CustomText(
+                  text: userProvider.userModel.email ?? '',
+                ),
+              ),
               const ListTile(
                 leading: Icon(Icons.exit_to_app),
                 title: CustomText(text: 'Log out'),
@@ -82,69 +82,77 @@ class _MyHomePageState extends State<MyHomePage> {
                 },
               ),
             ],
-          ),),
-          body: Stack(
-            children: [
-              MapScreen(scaffoldState),
-              Positioned(
-                  top: 60,
-                  left: MediaQuery.of(context).size.width / 6,
+          ),
+        ),
+        body: Stack(
+          children: [
+            MapScreen(scaffoldState),
+            Positioned(
+              top: 60,
+              left: MediaQuery.of(context).size.width / 6,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 30),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: white,
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: const [BoxShadow(color: grey, blurRadius: 17)],
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    child: Container(
-                      decoration: BoxDecoration(
-                          color: white,
-                          borderRadius: BorderRadius.circular(30),
-                          boxShadow: const [BoxShadow(color: grey, blurRadius: 17)],),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              child: userProvider.userModel.phone == null
-                                  ? const CircleAvatar(
-                                      radius: 30,
-                                      child: Icon(
-                                        Icons.person_outline,
-                                        size: 25,
-                                      ),
-                                    )
-                                  : CircleAvatar(
-                                      radius: 30,
-                                      backgroundImage: NetworkImage(
-                                          userProvider.userModel.photo,),
-                                    ),
-                            ),
-                            const SizedBox(
-                              width: 10,
-                            ),
-                            SizedBox(
-                              height: 60,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  CustomText(
-                                    text: userProvider.userModel.name,
-                                    size: 18,
-                                    weight: FontWeight.bold,
+                    padding: const EdgeInsets.all(8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          child: userProvider.userModel.phone == null
+                              ? const CircleAvatar(
+                                  radius: 30,
+                                  child: Icon(
+                                    Icons.person_outline,
+                                    size: 25,
                                   ),
-                                  stars(
-                                      rating: userProvider.userModel.rating,
-                                      votes: userProvider.userModel.votes,),
-                                ],
-                              ),
-                            ),
-                          ],
+                                )
+                              : CircleAvatar(
+                                  radius: 30,
+                                  backgroundImage: NetworkImage(
+                                    userProvider.userModel.photo,
+                                  ),
+                                ),
                         ),
-                      ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        SizedBox(
+                          height: 60,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CustomText(
+                                text: userProvider.userModel.name,
+                                size: 18,
+                                weight: FontWeight.bold,
+                              ),
+                              stars(
+                                rating: userProvider.userModel.rating,
+                                votes: userProvider.userModel.votes,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ),),
-              //  ANCHOR Draggable DRIVER
-              Visibility(
-                  visible: appState.show == Show.RIDER, child: const RiderWidget(),),
-            ],
-          ),),
+                  ),
+                ),
+              ),
+            ),
+            //  ANCHOR Draggable DRIVER
+            Visibility(
+              visible: appState.show == Show.RIDER,
+              child: const RiderWidget(),
+            ),
+          ],
+        ),
+      ),
     );
 
     switch (appState.hasNewRideRequest) {
@@ -159,7 +167,6 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 class MapScreen extends StatefulWidget {
-
   const MapScreen(this.scaffoldState, {super.key});
   final GlobalKey<ScaffoldState> scaffoldState;
 
@@ -202,14 +209,15 @@ class _MapScreenState extends State<MapScreen> {
                 top: 10,
                 left: 15,
                 child: IconButton(
-                    icon: const Icon(
-                      Icons.menu,
-                      color: primary,
-                      size: 30,
-                    ),
-                    onPressed: () {
-                      scaffoldSate.currentState.openDrawer();
-                    },),
+                  icon: const Icon(
+                    Icons.menu,
+                    color: primary,
+                    size: 30,
+                  ),
+                  onPressed: () {
+                    scaffoldSate.currentState.openDrawer();
+                  },
+                ),
               ),
             ],
           );

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:cabdriver/helpers/constants.dart';
-import 'package:cabdriver/helpers/style.dart';
 import 'package:cabdriver/models/ride_Request.dart';
 import 'package:cabdriver/models/rider.dart';
 import 'package:cabdriver/models/route.dart';
@@ -11,7 +10,9 @@ import 'package:cabdriver/services/ride_request.dart';
 import 'package:cabdriver/services/rider.dart';
 import 'package:cabdriver/services/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
@@ -20,25 +21,33 @@ import 'package:uuid/uuid.dart';
 
 enum Show { RIDER, TRIP }
 
-class AppStateProvider with ChangeNotifier {
+typedef GeoLocation = geocoding.Location;
+typedef GeoPlaceMark = geocoding.Placemark;
 
+class AppStateProvider with ChangeNotifier {
   AppStateProvider() {
 //    _subscribeUser();
     _saveDeviceToken();
-    fcm.configure(
-//      this callback is used when the app runs on the foreground
-        onMessage: handleOnMessage,
-//        used when the app is closed completely and is launched using the notification
-        onLaunch: handleOnLaunch,
-//        when its on the background and opened using the notification drawer
-        onResume: handleOnResume,);
+    FirebaseMessaging.onMessage.listen(handleOnMessage);
+    FirebaseMessaging.onMessageOpenedApp.listen(handleOnLaunch);
+    FirebaseMessaging.onBackgroundMessage(handleOnResume);
+//     fcm.configure(
+// //      this callback is used when the app runs on the foreground
+//       onMessage: handleOnMessage,
+// //        used when the app is closed completely and is launched using the notification
+//       onLaunch: handleOnLaunch,
+// //        when its on the background and opened using the notification drawer
+//       onResume: handleOnResume,
+//     );
     _getUserLocation();
     Geolocator.getPositionStream().listen(_userCurrentLocationUpdate);
   }
+
   static const ACCEPTED = 'accepted';
   static const CANCELLED = 'cancelled';
   static const PENDING = 'pending';
   static const EXPIRED = 'expired';
+
   // ANCHOR: VARIABLES DEFINITION
   Set<Marker> _markers = {};
   Set<Polyline> _poly = {};
@@ -51,10 +60,15 @@ class AppStateProvider with ChangeNotifier {
   TextEditingController destinationController = TextEditingController();
 
   LatLng get center => _center;
+
   LatLng get lastPosition => _lastPosition;
+
   TextEditingController get locationController => _locationController;
+
   Set<Marker> get markers => _markers;
+
   Set<Polyline> get poly => _poly;
+
   GoogleMapController get mapController => _mapController;
   RouteModel routeModel;
   SharedPreferences prefs;
@@ -79,10 +93,11 @@ class AppStateProvider with ChangeNotifier {
   // ANCHOR LOCATION METHODS
   _userCurrentLocationUpdate(Position updatedPosition) async {
     final distance = Geolocator.distanceBetween(
-        prefs.getDouble('lat'),
-        prefs.getDouble('lng'),
-        updatedPosition.latitude,
-        updatedPosition.longitude,);
+      prefs.getDouble('lat'),
+      prefs.getDouble('lng'),
+      updatedPosition.latitude,
+      updatedPosition.longitude,
+    );
     var values = <String, dynamic>{
       'id': prefs.getString('id'),
       'position': updatedPosition.toJson(),
@@ -100,8 +115,11 @@ class AppStateProvider with ChangeNotifier {
   _getUserLocation() async {
     prefs = await SharedPreferences.getInstance();
     position = await Geolocator.getCurrentPosition();
-    final List<Placemark> placemark = await Geolocator()
-        .placemarkFromCoordinates(position.latitude, position.longitude);
+    final List<GeoPlaceMark> placemark =
+        await geocoding.placemarkFromCoordinates(
+      position.latitude,
+      position.longitude,
+    );
     _center = LatLng(position.latitude, position.longitude);
     await prefs.setDouble('lat', position.latitude);
     await prefs.setDouble('lng', position.longitude);
@@ -126,7 +144,8 @@ class AppStateProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> sendRequest({String intendedLocation, LatLng coordinates}) async {
+  Future<void> sendRequest(
+      {String intendedLocation, LatLng coordinates}) async {
     final origin = LatLng(position.latitude, position.longitude);
 
     final destination = coordinates;
@@ -134,7 +153,10 @@ class AppStateProvider with ChangeNotifier {
         await _googleMapsServices.getRouteByCoordinates(origin, destination);
     routeModel = route;
     addLocationMarker(
-        destination, routeModel.endAddress, routeModel.distance.text,);
+      destination,
+      routeModel.endAddress,
+      routeModel.distance.text,
+    );
     _center = destination;
     destinationController.text = routeModel.endAddress;
 
@@ -146,11 +168,14 @@ class AppStateProvider with ChangeNotifier {
     _poly = {};
     const uuid = Uuid();
     final polyId = uuid.v1();
-    poly.add(Polyline(
+    poly.add(
+      Polyline(
         polylineId: PolylineId(polyId),
         width: 8,
         onTap: () {},
-        points: _convertToLatLong(_decodePoly(decodeRoute)),),);
+        points: _convertToLatLong(_decodePoly(decodeRoute)),
+      ),
+    );
     notifyListeners();
   }
 
@@ -205,10 +230,13 @@ class AppStateProvider with ChangeNotifier {
     _markers = {};
     const uuid = Uuid();
     var markerId = uuid.v1();
-    _markers.add(Marker(
+    _markers.add(
+      Marker(
         markerId: MarkerId(markerId),
         position: position,
-        infoWindow: InfoWindow(title: destination, snippet: distance),),);
+        infoWindow: InfoWindow(title: destination, snippet: distance),
+      ),
+    );
     notifyListeners();
   }
 
@@ -232,16 +260,16 @@ class AppStateProvider with ChangeNotifier {
   }
 
 // ANCHOR PUSH NOTIFICATION METHODS
-  Future handleOnMessage(Map<String, dynamic> data) async {
-    _handleNotificationData(data);
+  Future handleOnMessage(RemoteMessage message) async {
+    _handleNotificationData(message.data);
   }
 
-  Future handleOnLaunch(Map<String, dynamic> data) async {
-    _handleNotificationData(data);
+  Future handleOnLaunch(RemoteMessage message) async {
+    _handleNotificationData(message.data);
   }
 
-  Future handleOnResume(Map<String, dynamic> data) async {
-    _handleNotificationData(data);
+  Future handleOnResume(RemoteMessage message) async {
+    _handleNotificationData(message.data);
   }
 
   _handleNotificationData(Map<String, dynamic> data) async {
@@ -302,7 +330,8 @@ class AppStateProvider with ChangeNotifier {
   acceptRequest({String requestId, String driverId}) {
     hasNewRideRequest = false;
     _requestServices.updateRequest(
-        {'id': requestId, 'status': 'accepted', 'driverId': driverId},);
+      {'id': requestId, 'status': 'accepted', 'driverId': driverId},
+    );
     notifyListeners();
   }
 
