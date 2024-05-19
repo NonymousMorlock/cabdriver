@@ -301,10 +301,11 @@ class AppStateProvider with ChangeNotifier {
     print('======= LISTENING =======');
     requestStream = _requestServices.requestStream().listen((querySnapshot) {
       for (final doc in querySnapshot.docChanges) {
-        if (doc.doc.data()?['id'] == id) {
+        final data = doc.doc.data() as Map<String, dynamic>?;
+        if (data?['id'] == id) {
           requestModelFirebase = RequestModelFirebase.fromSnapshot(doc.doc);
           notifyListeners();
-          switch (doc.doc.data()?['status']) {
+          switch (data?['status']) {
             case CANCELLED:
               print('====== CANCELELD');
             case ACCEPTED:
