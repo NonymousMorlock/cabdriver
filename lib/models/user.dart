@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class UserModel {
   UserModel.fromSnapshot(DocumentSnapshot snapshot)
       : assert(snapshot.data() != null) {
-    final data = snapshot.data()!;
+    final data = snapshot.data()! as Map<String, dynamic>;
     _name = data[NAME];
     _email = data[EMAIL];
     _id = data[ID];
