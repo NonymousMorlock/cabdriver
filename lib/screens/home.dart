@@ -10,8 +10,8 @@ import 'package:cabdriver/widgets/custom_text.dart';
 import 'package:cabdriver/widgets/loading.dart';
 import 'package:cabdriver/widgets/rider_draggable.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_google_maps_webservices/places.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:google_maps_webservice/places.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
