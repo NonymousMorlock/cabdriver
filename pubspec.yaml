@@ -7,23 +7,22 @@ environment:
   sdk: ">=3.1.0 <4.0.0"
 
 dependencies:
-  cloud_firestore: ^1.0.7
-  firebase_auth: ^3.11.2
-  firebase_core: ^1.24.0
-  firebase_messaging: ^13.0.3
+  cloud_firestore: ^4.17.3
+  firebase_auth: ^4.19.5
+  firebase_core: ^2.31.0
+  firebase_messaging: ^14.9.2
   flutter:
     sdk: flutter
-  flutter_google_places: ^0.3.0
   flutter_rating_bar: ^4.0.1
   flutter_spinkit: ^5.2.1
   geocoder2: ^1.4.0
   geocoding: ^3.0.0
-  geoflutterfire: ^3.0.0-nullsafety.2
+  geoflutterfire2: ^2.3.15
   geolocator: ^12.0.0
   get_it: ^7.7.0
   google_maps_flutter: ^2.6.1
-  google_maps_webservice: ^0.0.20-nullsafety.5
-  http: ^0.13.6
+  flutter_google_maps_webservices: ^1.1.1
+  http: ^1.2.1
   location: ^6.0.2
   percent_indicator: ^4.2.3
   provider: ^6.1.2
@@ -34,6 +33,18 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+# Because geocoder2 1.4.0 depends on http ^0.13.4 and no versions of geocoder2 match >1.4.0 <2.0.0, geocoder2 ^1.4.0 requires http ^0.13.4.
+#So, because cabdriver depends on both geocoder2 ^1.4.0 and http ^1.2.1, version solving failed.
+
+# Because geoflutterfire2 >=2.3.14 depends on rxdart ^0.27.7 and flutter_google_places 0.3.0 depends on rxdart ^0.26.0, geoflutterfire2 >=2.3.14 is incompatible with flutter_google_places 0.3.0.
+#And because no versions of flutter_google_places match >0.3.0 <0.4.0, geoflutterfire2 >=2.3.14 is incompatible with flutter_google_places ^0.3.0.
+#So, because cabdriver depends on both flutter_google_places ^0.3.0 and geoflutterfire2 ^2.3.15, version solving failed.
+dependency_overrides:
+    http: ^0.13.4
+    rxdart: ^0.27.7
+
+
 
 flutter:
   uses-material-design: true
