@@ -73,7 +73,7 @@ class Distance {
 class RequestModelFirebase {
   RequestModelFirebase.fromSnapshot(DocumentSnapshot snapshot)
       : assert(snapshot.data() != null) {
-    final data = snapshot.data()!;
+    final data = snapshot.data()! as Map<String, dynamic>;
     _id = data[ID];
     _username = data[USERNAME];
     _userId = data[USER_ID];
